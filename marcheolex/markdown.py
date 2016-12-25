@@ -74,35 +74,27 @@ def creer_markdown_texte(texte, cache):
         f_article = open(chemin_article, 'r')
         soup = BeautifulSoup(f_article.read(), 'xml')
         f_article.close()
-        contenu = soup.find('BLOC_TEXTUEL').find('CONTENU').text.strip()
-        
-        # Logique de transformation en Markdown
+        contenu = soup.find('BLOC_TEXTUEL').find('CONTENU')
+
+        # Nettoyage de contenu (sauts de ligne)
+        for br in contenu.find_all('br'):
+            br.replace_with("L-N")
+        for p in contenu.find_all('p'):
+            p.replace_with(p.text.strip() + "L-NL-N")
+        contenu = contenu.text
+        contenu = contenu.replace("\n", "")
+        contenu = " ".join(contenu.split())
+        for i in range(3):
+            contenu = contenu.replace("L-NL-NL-N", "L-NL-N")
+        contenu = contenu.replace("L-N", "\n").strip()
         lignes = [l.strip() for l in contenu.split('\n')]
         contenu = '\n'.join(lignes)
         
-        # - Retrait des <br/> en début et fin (cela semble être enlevé par BeautifulSoup)
-        if all([lignes[l].startswith(('<br/>', r'<br />')) for l in range(0, len(lignes))]):
-            lignes[i] = re.sub(r'^<br ?/> *', r'', lignes[i])
-        if all([lignes[l].endswith(('<br/>', r'<br />')) for l in range(0, len(lignes))]):
-            lignes[i] = re.sub(r' *<br ?/>$', r'', lignes[i])
-        contenu = '\n'.join(lignes)
-        
-        # - Markdownisation des listes numérotées
-        ligne_liste = [ False ] * len(lignes)
+        # Markdownisation des listes numérotées
         for i in range(len(lignes)):
-            if re.match(r'(?:\d+[°\.\)-]|[\*-]) ', lignes[i]):
-                ligne_liste[i] = True
             lignes[i] = re.sub(r'^(\d+)([°\.\)-]) +', r'\1. ', lignes[i])
             lignes[i] = re.sub(r'^([\*-]) +', r'- ', lignes[i])
         contenu = '\n'.join(lignes)
-        
-        # - Création d’alinea séparés, sauf pour les listes
-        contenu = lignes[0]
-        for i in range(1, len(lignes)):
-            if ligne_liste[i]:
-                contenu = contenu + '\n' + lignes[i]
-            else:
-                contenu = contenu + '\n\n' + lignes[i]
         
         # Enregistrement
         f_markdown = open(chemin_markdown, 'w')
