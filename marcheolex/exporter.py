@@ -156,7 +156,10 @@ def creer_sections(texte, niveau, version_section_parente, versions_sections, ar
         marque_niveau = marque_niveau + '#'
     
     # Champ Version_section
-    versions_section = versions_sections.select().where(Version_section.id_parent == version_section_parente).order_by(Version_section.numero)
+    if version_section_parente == None:
+        versions_section = versions_sections.select().where(Version_section.id_parent == version_section_parente).order_by(Version_section.numero)
+    else:
+        versions_section = versions_sections.select().where( (Version_section.id_parent == version_section_parente.cid.cid) | (Version_section.id_parent == version_section_parente) ).order_by(Version_section.numero)
     
     # Itérer sur les sections de cette section
     for version_section in versions_section:
@@ -187,7 +190,10 @@ def creer_articles_section(texte, niveau, version_section_parente, articles, ver
         marque_niveau = marque_niveau + '#'
     
     # Champ Article
-    articles_section = articles.select().where(Article.version_section == version_section_parente)
+    if version_section_parente == None:
+        articles_section = articles.select().where(Article.version_section == version_section_parente)
+    else:
+        articles_section = articles.select().where( (Article.version_section == version_section_parente.cid.cid) | (Article.version_section == version_section_parente) )
     
     # Itérer sur les articles de cette section
     for article in articles_section:
