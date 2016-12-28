@@ -217,8 +217,13 @@ def creer_articles_section(texte, niveau, version_section_parente, articles, ver
 
 def ajouter_liens_internes(contenu):
 
-    # Changement de style pour les décrets pris en conseil des ministres
-    contenu = contenu.replace('R. *', 'R*.')
+    # Corrections mineures pour les décrets *
+    for l in ['R', 'D']:
+        contenu = contenu.replace(l + '* ', l + '*')  # suppr. un espace en + dans l'art.
+        contenu = contenu.replace(l + '. * ', l + '*. ')  # corrig. mauvais formattages
+        contenu = contenu.replace(l + '. *', l + '*. ')
+        contenu = contenu.replace(l + '.* ', l + '*. ')
+        contenu = contenu.replace(l + '.*', l + '*. ')
 
     # Ajouter un lien interne vers l'article en question
     lignes = [l.strip() for l in contenu.split('\n')]
@@ -229,8 +234,10 @@ def ajouter_liens_internes(contenu):
             type_article = info[:ind]
             num_article = info[ind:]
             article = type_article + '. ' + num_article
-            article_avec_lien = '[' + article + ']' + \
-                                '(#article-' + type_article.lower() + num_article + ')'
+            contenu = contenu.replace(type_article + '.' + num_article, article)
+            type_article_lien = type_article.lower().replace('*', '')
+            article_avec_lien = '[' + article.replace('*', r'\*') + ']' + \
+                                '(#article-' + type_article_lien + num_article + ')'
             for symbole in [' ', ',', '.']:  # rechercher des mots exacts
                 contenu = contenu.replace(article + symbole, article_avec_lien + symbole)
     return contenu
