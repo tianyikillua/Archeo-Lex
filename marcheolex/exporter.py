@@ -18,6 +18,7 @@ from __future__ import print_function
 import os
 import subprocess
 import datetime
+import re
 from path import path
 from bs4 import BeautifulSoup
 from marcheolex import logger
@@ -133,6 +134,9 @@ def creer_historique_texte(texte, format, dossier, cache):
         # Créer les sections (donc tout le texte)
         contenu = creer_sections(contenu, 1, None, versions_sections, articles, version_texte, cid, cache)
         
+        # Ajouter des liens internes vers articles
+        contenu = ajouter_liens_internes(contenu)
+        
         # Enregistrement du fichier
         f_texte = open(fichier, 'w')
         f_texte.write(contenu.encode('utf-8'))
@@ -210,3 +214,23 @@ def creer_articles_section(texte, niveau, version_section_parente, articles, ver
         
     return texte
 
+
+def ajouter_liens_internes(contenu):
+
+    # Changement de style pour les décrets pris en conseil des ministres
+    contenu = contenu.replace('R. *', 'R*.')
+
+    # Ajouter un lien interne vers l'article en question
+    lignes = [l.strip() for l in contenu.split('\n')]
+    for ligne in lignes:
+        info = ligne.partition('# Article ')[2]
+        if info:
+            ind = re.search('\d', info).start()
+            type_article = info[:ind]
+            num_article = info[ind:]
+            article = type_article + '. ' + num_article
+            article_avec_lien = '[' + article + ']' + \
+                                '(#article-' + type_article.lower() + num_article + ')'
+            for symbole in [' ', ',', '.']:  # rechercher des mots exacts
+                contenu = contenu.replace(article + symbole, article_avec_lien + symbole)
+    return contenu
