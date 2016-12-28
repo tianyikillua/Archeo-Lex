@@ -88,7 +88,6 @@ def creer_markdown_texte(texte, cache):
             contenu = contenu.replace("L-NL-NL-N", "L-NL-N")
         contenu = contenu.replace("L-N", "\n").strip()
         lignes = [l.strip() for l in contenu.split('\n')]
-        contenu = '\n'.join(lignes)
         
         # Markdownisation des listes numérotées
         for i in range(len(lignes)):
