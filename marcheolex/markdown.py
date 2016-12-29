@@ -78,15 +78,15 @@ def creer_markdown_texte(texte, cache):
 
         # Nettoyage de contenu (sauts de ligne)
         for br in contenu.find_all('br'):
-            br.replace_with("L-N")
+            br.replace_with('L-N')
         for p in contenu.find_all('p'):
-            p.replace_with(p.text.strip() + "L-NL-N")
+            p.replace_with(p.text.strip() + 'L-NL-N')
         contenu = contenu.text
-        contenu = contenu.replace("\n", "")
-        contenu = " ".join(contenu.split())
+        contenu = contenu.replace('\n', '')
+        contenu = ' '.join(contenu.split())
         for i in range(3):
-            contenu = contenu.replace("L-NL-NL-N", "L-NL-N")
-        contenu = contenu.replace("L-N", "\n").strip()
+            contenu = contenu.replace('L-NL-NL-N', 'L-NL-N')
+        contenu = contenu.replace('L-N', '\n').strip()
         lignes = [l.strip() for l in contenu.split('\n')]
         
         # Markdownisation des listes numérotées
