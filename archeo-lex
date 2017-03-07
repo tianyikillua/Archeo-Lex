@@ -120,7 +120,7 @@ def principal(arguments):
     data['format'] = {}
     data['format']['dialecte'] = arguments.get('--dialecte') or 'markdown'
     data['format']['historique'] = arguments.get('--historique') or 'git'
-    data['format']['metadonnees'] = arguments.get('--metadonnees') or False
+    data['format']['metadonnees'] = arguments.get('--metadonnees') or ''
     data['format']['organisation'] = arguments.get('--organisation') or 'fichier-unique'
     
     # Lecture des autres paramètres
