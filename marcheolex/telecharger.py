@@ -35,6 +35,7 @@ from marcheolex.basededonnees import Livraison
 from marcheolex.utilitaires import telecharger
 from marcheolex.utilitaires import telecharger_cache
 from marcheolex.utilitaires import verif_taille
+from marcheolex.utilitaires import fusionner
 
 
 def telecharger_legifrance(url, fichier, cache_html, force=False):
@@ -181,7 +182,7 @@ def telecharger_base(base, livraison='tout', cache='cache'):
         livraison = date_fond
     if livraison == 'tout':
         livraison = dates_majo[-1]
-    dates_majo = [date for date in dates_majo if date <= livraison]
+    dates_majo = [date for date in dates_majo if date_fond <= date <= livraison]
     
     # Téléchargement du dump complet
     telecharger_cache(serveur + date_fond.strftime(fichiers_fond[base]),
@@ -231,12 +232,16 @@ def decompresser_base(base, date_fond, dates_majo, cache='cache'):
         if os.path.exists(os.path.join(rep, 'fond-' + date, 'erreur-tar')):
             shutil.rmtree(os.path.join(rep, 'fond-' + date))
         path(os.path.join(rep, 'fond-' + date)).mkdir_p()
+        
+        # Décompression - en cas d’arrêt le fichier 'erreur-tar' reste
         open(os.path.join(rep, 'fond-' + date, 'erreur-tar'), 'w').close()
         subprocess.call(['tar', 'xzf',
             os.path.join(cache, 'tar', base + '-fond-' + date + '.tar.gz'),
             '-C', os.path.join(rep, 'fond-' + date)])
         os.remove(os.path.join(rep, 'fond-' + date, 'erreur-tar'))
-        
+        shutil.move(os.path.join(rep, 'fond-' + date, 'legi'),
+                    os.path.join(cache, 'bases-xml', 'legi'))
+        shutil.rmtree(os.path.join(rep, 'fond-' + date))
     
     # Inscrire cette livraison dans la base de données
     try:
@@ -265,6 +270,8 @@ def decompresser_base(base, date_fond, dates_majo, cache='cache'):
             if os.path.exists(os.path.join(rep, 'majo-' + date, 'erreur-tar')):
                 shutil.rmtree(os.path.join(rep, 'majo-' + date), True)
             path(os.path.join(rep, date)).mkdir_p()
+            
+            # Décompression - en cas d’arrêt le fichier 'erreur-tar' reste
             open(os.path.join(rep, date, 'erreur-tar'), 'w').close()
             subprocess.call(['tar', 'xzf',
                 os.path.join(cache, 'tar', base + '-majo-' + date + '.tar.gz'),
@@ -272,6 +279,23 @@ def decompresser_base(base, date_fond, dates_majo, cache='cache'):
             os.rename(os.path.join(rep, date),
                       os.path.join(rep, 'majo-' + date))
             os.remove(os.path.join(rep, 'majo-' + date, 'erreur-tar'))
+            
+            # Retrait des fichiers à supprimer
+            if os.path.exists(os.path.join(rep, 'majo-' + date, 'liste_suppression_legi.dat')):
+                f_liste = open(os.path.join(rep, 'majo-' + date, 'liste_suppression_legi.dat'), 'r')
+                liste_fichiers_sup = f_liste.read().strip().split('\n')
+                f_liste.close()
+                for fichier_sup in liste_fichiers_sup:
+                    print('Retrait de '+os.path.join(cache, 'bases-xml', fichier_sup.strip()+'.xml'))
+                    if os.path.exists(os.path.join(cache, 'bases-xml', fichier_sup.strip()+'.xml')):
+                        os.remove(os.path.join(cache, 'bases-xml', fichier_sup.strip()+'.xml'))
+                    else:
+                        print('Erreur')
+            
+            # Intégration des nouveaux fichiers dans l’arborescence existante
+            fusionner(os.path.join(rep, 'majo-' + date, 'legi'),
+                      os.path.join(cache, 'bases-xml', 'legi'))
+            shutil.rmtree(os.path.join(rep, 'majo-' + date))
         
         # Inscrire cette livraison dans la base de données
         try:
@@ -284,4 +308,9 @@ def decompresser_base(base, date_fond, dates_majo, cache='cache'):
                     precedent=entree_livraison,
                     fondation=entree_livraison_fondation
                 )
+    
+    try:
+        os.rmdir(rep)
+    except OSError:
+        pass
 
