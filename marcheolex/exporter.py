@@ -144,7 +144,8 @@ def creer_historique_texte(texte, format, dossier, cache):
         contenu = creer_sections(contenu, 1, None, versions_sections, articles, version_texte, cid, format, [], dossier, cache)
         
         # Ajouter des liens internes vers articles
-        contenu = ajouter_liens_internes(contenu)
+        if 'lien' in format['metadonnees']:
+            contenu = ajouter_liens_internes(contenu)
         
         # Enregistrement du fichier
         if format['organisation'] == 'fichier-unique':
@@ -241,6 +242,7 @@ def creer_articles_section(texte, niveau, version_section_parente, articles, ver
 def ajouter_liens_internes(contenu):
 
     # Corrections mineures pour les décrets *
+    # TODO afficher un message d'avertissement
     for l in ['R', 'D']:
         contenu = contenu.replace(l + '* ', l + '*')  # suppr. un espace en + dans l'art.
         contenu = contenu.replace(l + '. * ', l + '*. ')  # corrig. mauvais formattages
@@ -252,12 +254,13 @@ def ajouter_liens_internes(contenu):
     lignes = [l.strip() for l in contenu.split('\n')]
     for ligne in lignes:
         info = ligne.partition('# Article ')[2]
-        if info:
-            ind = re.search('\d', info).start()
+        num = re.search('\d', info)
+        if num:
+            ind = num.start()
             type_article = info[:ind]
             num_article = info[ind:]
             article = type_article + '. ' + num_article
-            contenu = contenu.replace(type_article + '.' + num_article, article)
+            contenu = contenu.replace(type_article + '.' + num_article, article)  # ajouter un espace
             type_article_lien = type_article.lower().replace('*', '')
             article_avec_lien = '[' + article.replace('*', r'\*') + ']' + \
                                 '(#article-' + type_article_lien + num_article + ')'
